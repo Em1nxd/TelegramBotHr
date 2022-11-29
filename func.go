@@ -10,14 +10,19 @@ import (
 )
 
 type User struct {
-	ID          int64
-	FirstName   string
-	LastName    string
-	Username    string
-	PhoneNumber string
-	Language    string
-	Age         string
-	City        string
+	ID            int64
+	FirstName     string
+	Username      string
+	PhoneNumber   string
+	Language      string
+	Age           string
+	City          string
+	WorkingAs     string
+	Student       string
+	Degree        string
+	Photo         *tele.Photo
+	WorkingAdress string
+	Gender        string
 }
 type SessionUser struct {
 	step string
@@ -79,12 +84,11 @@ func (b *Bot) NewBotWithPolling() (*tele.Bot, error) {
 					user: &User{
 						ID:        sender.ID,
 						FirstName: sender.FirstName,
-						LastName:  sender.LastName,
 						Username:  sender.Username,
 					},
 				}
 
-				return ctx.Send("Выберите удобный вам язык", menu)
+				return ctx.Send("Tilni tanlang!", menu)
 			}
 
 			return next(ctx)
@@ -117,8 +121,9 @@ func botOnError(err error, ctx tele.Context) {
 func (b *Bot) Text(ctx tele.Context) error {
 
 	var (
-		text   = ctx.Text()
-		button = &tele.ReplyMarkup{
+		text  = ctx.Text()
+		photo = ctx.Message().Photo
+		ques  = &tele.ReplyMarkup{
 			OneTimeKeyboard: true,
 			ResizeKeyboard:  true,
 		}
@@ -128,65 +133,118 @@ func (b *Bot) Text(ctx tele.Context) error {
 	case "lang":
 
 		b.users[ctx.Sender().ID].user.Language = text
+		b.users[ctx.Sender().ID].step = "working_place"
+		ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}})
 
+		return ctx.Send("Qaysi filialda ishlamoqchisiz?", ques)
+
+	case "working_place":
+		b.users[ctx.Sender().ID].user.WorkingAdress = text
+		b.users[ctx.Sender().ID].step = "working_as"
+
+		return ctx.Send("Qaysi lavozimga topshiryapsiz?")
+	case "working_as":
+		b.users[ctx.Sender().ID].user.WorkingAs = text
 		b.users[ctx.Sender().ID].step = "name"
 
-		return ctx.Send("Напишите ваше имя")
+		return ctx.Send("To'liq ismingizni kiriting (Murodjon Tursunov Husanboy o'g'li):")
 	case "name":
 		b.users[ctx.Sender().ID].user.FirstName = text
-
-		b.users[ctx.Sender().ID].step = "surename"
-		return ctx.Send("Напишите вашу фамилию")
-
-	case "surename":
-		b.users[ctx.Sender().ID].user.LastName = text
-
-		b.users[ctx.Sender().ID].step = "phone_number"
-
-		button.Reply(tele.Row{tele.Btn{Contact: true, Text: "Поделиться номером"}})
-
-		return ctx.Send("📞 Напишите номер телефона", button)
-	case "phone_number":
-		if ctx.Message().Contact != nil {
-			b.users[ctx.Sender().ID].user.PhoneNumber = ctx.Message().Contact.PhoneNumber
-		} else {
-			b.users[ctx.Sender().ID].user.PhoneNumber = text
-		}
-
 		b.users[ctx.Sender().ID].step = "age"
-
-		return ctx.Send("🕑 Сколько вам лет?")
+		return ctx.Send("Tug'ilgan sanangiz (masalan: 18.03.1995):")
 	case "age":
 		b.users[ctx.Sender().ID].user.Age = text
+		b.users[ctx.Sender().ID].step = "gender"
+		ques.Reply(tele.Row{tele.Btn{Text: "Erkak"}, tele.Btn{Text: "Ayol"}})
 
+		return ctx.Send("Jinsingiz:", ques)
+	case "gender":
+		b.users[ctx.Sender().ID].user.Gender = text
+		b.users[ctx.Sender().ID].step = "student"
+		ques.Reply(tele.Row{tele.Btn{Text: "Kunduzgi"}, tele.Btn{Text: "Kechgi"}, tele.Btn{Text: "Sirtqi"}, tele.Btn{Text: "O'qimayman"}})
+
+		return ctx.Send("Ta'lim turi:", ques)
+	case "student":
+		b.users[ctx.Sender().ID].user.Student = text
 		b.users[ctx.Sender().ID].step = "city"
 
-		return ctx.Send("📍 В каком городе вы родились?")
-
+		return ctx.Send("Yashash manzilingiz:")
 	case "city":
 		b.users[ctx.Sender().ID].user.City = text
+		b.users[ctx.Sender().ID].step = "phone_number"
+
+		return ctx.Send("Telefon raqamingizni kiriting (masalan: +998991234567):")
+	case "phone_number":
+		b.users[ctx.Sender().ID].user.PhoneNumber = text
+		b.users[ctx.Sender().ID].step = "degree"
+
+		return ctx.Send("Ma'lumotingiz qanday?")
+	case "degree":
+		b.users[ctx.Sender().ID].user.Degree = text
+		b.users[ctx.Sender().ID].step = "photo"
+
+		return ctx.Send("Suratingizni yuboring (telefoningizdan selfi olishingiz mumkin):")
+	case "photo":
+		if photo != nil {
+			b.users[ctx.Sender().ID].user.Photo = photo
+
+			b.PhotoSender(
+				tele.Album{
+					&tele.Photo{
+						File: tele.File{FileID: photo.FileID, UniqueID: photo.UniqueID},
+						Caption: fmt.Sprintf("Sorovnoma📋\n\n<b>Filial</b>:%s\n\n<b>Lavozim</b>:%s\n\n<b>Ism va Familiya</b>:%s\n\n<b>Yosh</b>:%s\n\n<b>Jinzi</b>:%s\n\n<b>Ta'lim turi:</b>%s\n\n<b>Yashash manzili</b>:%s\n\n<b>Telefon Raqami</b>:%s\n\n<b>Ma'lumoti</b>:%s\n\n",
+							b.users[ctx.Sender().ID].user.WorkingAdress,
+							b.users[ctx.Sender().ID].user.WorkingAs,
+							b.users[ctx.Sender().ID].user.FirstName,
+							b.users[ctx.Sender().ID].user.Age,
+							b.users[ctx.Sender().ID].user.Gender,
+							b.users[ctx.Sender().ID].user.Student,
+							b.users[ctx.Sender().ID].user.City,
+							b.users[ctx.Sender().ID].user.PhoneNumber,
+							b.users[ctx.Sender().ID].user.Degree,
+						),
+					},
+				},
+			)
+		} else {
+			b.MessageSender(fmt.Sprintf("Sorovnoma📋\n\n<b>Filial</b>:%s\n\n<b>Lavozim</b>:%s\n\n<b>Ism va Familiya</b>:%s\n\n<b>Yosh</b>:%s\n\n<b>Jinzi</b>:%s\n\n<b>Ta'lim turi:</b>%s\n\n<b>Yashash manzili</b>:%s\n\n<b>Telefon Raqami</b>:%s\n\n<b>Ma'lumoti</b>:%s\n\n",
+				b.users[ctx.Sender().ID].user.WorkingAdress,
+				b.users[ctx.Sender().ID].user.WorkingAs,
+				b.users[ctx.Sender().ID].user.FirstName,
+				b.users[ctx.Sender().ID].user.Age,
+				b.users[ctx.Sender().ID].user.Gender,
+				b.users[ctx.Sender().ID].user.Student,
+				b.users[ctx.Sender().ID].user.City,
+				b.users[ctx.Sender().ID].user.PhoneNumber,
+				b.users[ctx.Sender().ID].user.Degree,
+			))
+		}
+
 		b.users[ctx.Sender().ID].step = ""
-
-		b.Sender(fmt.Sprintf("Анкета📋\n<b>Имя </b>: %s\n\n<b>Фамилия </b>: %s\n\n<b>Телефон Номер📞 </b>: %s\n\n<b>Возраст🕑 </b>: %s \n\n<b>Город Рождения📍</b>:%s \n\n",
-			b.users[ctx.Sender().ID].user.FirstName,
-			b.users[ctx.Sender().ID].user.LastName,
-			b.users[ctx.Sender().ID].user.PhoneNumber,
-			b.users[ctx.Sender().ID].user.Age,
-			b.users[ctx.Sender().ID].user.City,
-		))
-		
-
-		return ctx.Send("Спасибо за ваш отзыв! В скором времени наши сотрудники свяжутся с вами.")
+		return ctx.Send("Rahmat. Siz ko'rib chiqiladigan nomzodlar ro'yxatidasiz.Hurmat bilan Tiin kadrlar bo'limi!")
 	}
 
-	return ctx.Send("Спасибо за ваш отзыв! В скором времени наши сотрудники свяжутся с вами.")
+	return ctx.Send("Ariza faqat bir marta jonatiladi!")
 
 	// Instead, prefer a context short-hand:
 }
 
-func (b *Bot) Sender(messsage string) error {
+func (b *Bot) MessageSender(messsage string) error {
 
 	_, err := b.bot.Send(&tele.Chat{ID: -1001805067522}, messsage, &tele.SendOptions{
+		ParseMode: "HTML",
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Bot) PhotoSender(album tele.Album) error {
+
+	_, err := b.bot.SendAlbum(&tele.Chat{ID: -1001805067522}, album, &tele.SendOptions{
 		ParseMode: "HTML",
 	})
 
