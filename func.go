@@ -270,8 +270,10 @@ func (b *Bot) Text(ctx tele.Context) error {
 			))
 		}
 
-		b.users[ctx.Sender().ID].step = ""
-		return ctx.Send("Rahmat. Siz ko'rib chiqiladigan nomzodlar ro'yxatidasiz.Hurmat bilan Tiin kadrlar bo'limi!")
+		b.users[ctx.Sender().ID].step = "about_us"
+		ques.Reply(tele.Row{tele.Btn{Text: "💼Bo'sh ish o'rinlari"}, tele.Btn{Text: "🏢Biz haqimizda"}}, tele.Row{tele.Btn{Text: "📍Manzillarimiz"}, tele.Btn{Text: "📞Aloqa"}})
+
+		return ctx.Send("Rahmat. Siz ko'rib chiqiladigan nomzodlar ro'yxatidasiz.Hurmat bilan Tiin kadrlar bo'limi!", ques)
 	}
 
 	return ctx.Send("Ariza faqat bir marta jonatiladi!")
