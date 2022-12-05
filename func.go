@@ -207,16 +207,16 @@ func (b *Bot) Text(ctx tele.Context) error {
 		return ctx.Send("Jinsingiz:", ques)
 	case "gender":
 		b.users[ctx.Sender().ID].user.Gender = text
-		b.users[ctx.Sender().ID].step = "student"
-
-		ques.Reply(tele.Row{tele.Btn{Text: "Xa"}, tele.Btn{Text: "Yoq"}})
-
-		return ctx.Send("Talabamisiz?", ques)
-	case "student":
-		b.users[ctx.Sender().ID].user.Student = text
 		b.users[ctx.Sender().ID].step = "city"
 
-		return ctx.Send("Yashash manzilingiz:")
+		// ques.Reply(tele.Row{tele.Btn{Text: "Xa"}, tele.Btn{Text: "Yoq"}})
+
+		return ctx.Send("Yashash manzilingiz?")
+	// case "student":
+	// 	b.users[ctx.Sender().ID].user.Student = text
+	// 	b.users[ctx.Sender().ID].step = "city"
+
+	// 	return ctx.Send("Yashash manzilingiz:")
 	case "city":
 		b.users[ctx.Sender().ID].user.City = text
 		b.users[ctx.Sender().ID].step = "phone_number"
