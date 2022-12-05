@@ -225,7 +225,7 @@ func (b *Bot) Text(ctx tele.Context) error {
 	case "phone_number":
 		b.users[ctx.Sender().ID].user.PhoneNumber = text
 		b.users[ctx.Sender().ID].step = "degree"
-		ques2.Reply(tele.Row{tele.Btn{Text: "Oliy"}, tele.Btn{Text: "O'rta"}}, tele.Row{tele.Btn{Text: "O'rta maxsus"}})
+		ques2.Reply(tele.Row{tele.Btn{Text: "Oliy"}, tele.Btn{Text: "O'rta"}}, tele.Row{tele.Btn{Text: "O'rta maxsus"}, tele.Btn{Text: "Talaba"}})
 
 		return ctx.Send("Ma'lumotingiz qanday?", ques2)
 	case "degree":
@@ -242,13 +242,12 @@ func (b *Bot) Text(ctx tele.Context) error {
 				tele.Album{
 					&tele.Photo{
 						File: tele.File{FileID: photo.FileID, UniqueID: photo.UniqueID},
-						Caption: fmt.Sprintf("📋Rezyume\n\n<b>📍Filial</b>:%s<b>👨‍💼Lavozim</b>:%s<b>📇Ism va Familiya</b>:%s<b>🔢Yosh</b>:%s<b>👥Jinsi</b>:%s<b>🎓Ta'lim turi:</b>%s<b>🏡Yashash manzili</b>:%s<b>📞Telefon Raqami</b>:%s<b>📃Ma'lumoti</b>:%s\n\n",
+						Caption: fmt.Sprintf("📋Rezyume\n\n<b>📍Filial</b>:%s<b>👨‍💼Lavozim</b>:%s<b>📇Ism va Familiya</b>:%s<b>🔢Yosh</b>:%s<b>👥Jinsi</b>:%s<b>🏡Yashash manzili</b>:%s<b>📞Telefon Raqami</b>:%s<b>📃Ma'lumoti</b>:%s\n\n",
 							b.users[ctx.Sender().ID].user.WorkingAdress,
 							b.users[ctx.Sender().ID].user.WorkingAs,
 							b.users[ctx.Sender().ID].user.FirstName,
 							b.users[ctx.Sender().ID].user.Age,
 							b.users[ctx.Sender().ID].user.Gender,
-							b.users[ctx.Sender().ID].user.Student,
 							b.users[ctx.Sender().ID].user.City,
 							b.users[ctx.Sender().ID].user.PhoneNumber,
 							b.users[ctx.Sender().ID].user.Degree,
@@ -257,13 +256,12 @@ func (b *Bot) Text(ctx tele.Context) error {
 				},
 			)
 		} else {
-			b.MessageSender(fmt.Sprintf("📋Rezyume\n\n<b>📍Filial</b>:%s<b>\n👨‍💼Lavozim</b>:%s<b>\n📇Ism va Familiya</b>:%s\n<b>🔢Yosh</b>:%s<b>\n👥Jinsi</b>:%s<b>\n🎓Talaba:</b>%s<b>\n🏡Yashash manzili</b>:%s<b>\n📞Telefon Raqami</b>:%s<b>\n📃Ma'lumoti</b>:%s\n\n",
+			b.MessageSender(fmt.Sprintf("📋Rezyume\n\n<b>📍Filial</b>:%s<b>\n👨‍💼Lavozim</b>:%s<b>\n📇Ism va Familiya</b>:%s\n<b>🔢Yosh</b>:%s<b>\n👥Jinsi</b>:%s<b>\n🏡Yashash manzili</b>:%s<b>\n📞Telefon Raqami</b>:%s<b>\n📃Ma'lumoti</b>:%s\n\n",
 				b.users[ctx.Sender().ID].user.WorkingAdress,
 				b.users[ctx.Sender().ID].user.WorkingAs,
 				b.users[ctx.Sender().ID].user.FirstName,
 				b.users[ctx.Sender().ID].user.Age,
 				b.users[ctx.Sender().ID].user.Gender,
-				b.users[ctx.Sender().ID].user.Student,
 				b.users[ctx.Sender().ID].user.City,
 				b.users[ctx.Sender().ID].user.PhoneNumber,
 				b.users[ctx.Sender().ID].user.Degree,
