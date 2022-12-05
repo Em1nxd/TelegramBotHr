@@ -202,10 +202,14 @@ func (b *Bot) Text(ctx tele.Context) error {
 	case "age":
 		b.users[ctx.Sender().ID].user.Age = text
 		b.users[ctx.Sender().ID].step = "gender"
-		ques.Reply(tele.Row{tele.Btn{Text: "🧑Erkak"}, tele.Btn{Text: "👩Ayol"}})
+		ques.Reply(tele.Row{tele.Btn{Text: "🧑Erkak"}, tele.Btn{Text: "👩Ayol"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}})
 
 		return ctx.Send("Jinsingiz:", ques)
 	case "gender":
+		if text == "🔙Orqaga" {
+			b.users[ctx.Sender().ID].step = "age"
+			return ctx.Send("Tug'ilgan sanangiz (masalan: 18.03.1995):")
+		}
 		b.users[ctx.Sender().ID].user.Gender = text
 		b.users[ctx.Sender().ID].step = "city"
 
@@ -225,10 +229,15 @@ func (b *Bot) Text(ctx tele.Context) error {
 	case "phone_number":
 		b.users[ctx.Sender().ID].user.PhoneNumber = text
 		b.users[ctx.Sender().ID].step = "degree"
-		ques2.Reply(tele.Row{tele.Btn{Text: "Oliy"}, tele.Btn{Text: "O'rta"}}, tele.Row{tele.Btn{Text: "O'rta maxsus"}, tele.Btn{Text: "Talaba"}})
+		ques2.Reply(tele.Row{tele.Btn{Text: "Oliy"}, tele.Btn{Text: "O'rta"}}, tele.Row{tele.Btn{Text: "O'rta maxsus"}, tele.Btn{Text: "Talaba"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}})
 
 		return ctx.Send("Ma'lumotingiz qanday?", ques2)
 	case "degree":
+		if text == "🔙Orqaga" {
+			b.users[ctx.Sender().ID].step = "phone_number"
+
+			return ctx.Send("Telefon raqamingizni kiriting (masalan: +998991234567):")
+		}
 		b.users[ctx.Sender().ID].user.Degree = text
 		b.users[ctx.Sender().ID].step = "photo"
 
