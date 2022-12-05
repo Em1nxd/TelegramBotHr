@@ -141,6 +141,13 @@ func (b *Bot) Text(ctx tele.Context) error {
 		}
 	)
 
+	if text == "🏠Menyu" {
+		b.users[ctx.Sender().ID].step = "about_us"
+		ques.Reply(tele.Row{tele.Btn{Text: "💼Bo'sh ish o'rinlari"}, tele.Btn{Text: "🏢Biz haqimizda"}}, tele.Row{tele.Btn{Text: "📍Manzillarimiz"}, tele.Btn{Text: "📞Aloqa"}})
+
+		return ctx.Send("Ozingizga kerakli menyuni tanlang:", ques)
+	}
+
 	switch b.users[ctx.Sender().ID].step {
 	case "lang":
 
@@ -157,7 +164,7 @@ func (b *Bot) Text(ctx tele.Context) error {
 			b.users[ctx.Sender().ID].user.AboutUs = text
 			b.users[ctx.Sender().ID].step = "working_place"
 
-			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}})
+			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 			return ctx.Send("Qaysi filialda ishlamoqchisiz?", ques)
 		case "🏢Biz haqimizda":
@@ -179,14 +186,14 @@ func (b *Bot) Text(ctx tele.Context) error {
 		b.users[ctx.Sender().ID].user.WorkingAdress = text
 		b.users[ctx.Sender().ID].step = "working_as"
 
-		ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}})
+		ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 		return ctx.Send("Qaysi lavozimga topshiryapsiz?", ques1)
 
 	case "working_as":
 		if text == "🔙Orqaga" {
 			b.users[ctx.Sender().ID].step = "working_place"
-			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}})
+			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 			return ctx.Send("Qaysi filialda ishlamoqchisiz?", ques)
 		}
@@ -202,7 +209,7 @@ func (b *Bot) Text(ctx tele.Context) error {
 	case "age":
 		b.users[ctx.Sender().ID].user.Age = text
 		b.users[ctx.Sender().ID].step = "gender"
-		ques.Reply(tele.Row{tele.Btn{Text: "🧑Erkak"}, tele.Btn{Text: "👩Ayol"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}})
+		ques.Reply(tele.Row{tele.Btn{Text: "🧑Erkak"}, tele.Btn{Text: "👩Ayol"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 		return ctx.Send("Jinsingiz:", ques)
 	case "gender":
@@ -229,7 +236,7 @@ func (b *Bot) Text(ctx tele.Context) error {
 	case "phone_number":
 		b.users[ctx.Sender().ID].user.PhoneNumber = text
 		b.users[ctx.Sender().ID].step = "degree"
-		ques2.Reply(tele.Row{tele.Btn{Text: "Oliy"}, tele.Btn{Text: "O'rta"}}, tele.Row{tele.Btn{Text: "O'rta maxsus"}, tele.Btn{Text: "Talaba"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}})
+		ques2.Reply(tele.Row{tele.Btn{Text: "Oliy"}, tele.Btn{Text: "O'rta"}}, tele.Row{tele.Btn{Text: "O'rta maxsus"}, tele.Btn{Text: "Talaba"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 		return ctx.Send("Ma'lumotingiz qanday?", ques2)
 	case "degree":
