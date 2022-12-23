@@ -1,155 +1,339 @@
 package main
 
-// import (
-// 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-// 	"main.go/config"
-// 	"main.go/logger"
-// )
+import (
+	"fmt"
+	"time"
 
-// var Token string = "5926355930:AAFNJ6xy7yasaXcHBhIUMyejTvnOyqDQaTo"
+	tele "gopkg.in/telebot.v3"
+	"main.go/config"
+	"main.go/logger"
+)
 
-// // func main() {
-// // 	bot, err := tgbotapi.NewBotAPI(Token)
-// // 	if err != nil {
-// // 		log.Panic(err)
-// // 	}
+type User struct {
+	ID            int64
+	FirstName     string
+	Username      string
+	PhoneNumber   string
+	Language      string
+	Age           string
+	City          string
+	WorkingAs     string
+	Student       string
+	Degree        string
+	Photo         *tele.Photo
+	WorkingAdress string
+	Gender        string
+	FreeWork      string
+	AboutUs       string
+	OurAdresses   string
+	Contact       string
+}
+type SessionUser struct {
+	step string
+	user *User
+}
 
-// // 	bot.Debug = true
+type Bot struct {
+	bot   *tele.Bot
+	users map[int64]*SessionUser
+	log   logger.Logger
+	cfg   config.Config
+	// builder builder.BuilderI
+}
 
-// // 	log.Printf("Authorized on account %s", bot.Self.UserName)
+type BotI interface {
+	NewBotWithPolling() (*tele.Bot, error)
+}
 
-// // 	u := tgbotapi.NewUpdate(0)
-// // 	u.Timeout = 60
+func NewBot(log logger.Logger, cfg config.Config) BotI {
+	return &Bot{log: log, cfg: cfg, users: map[int64]*SessionUser{}}
+}
 
-// // 	updates := bot.GetUpdatesChan(u)
+func (b *Bot) NewBotWithPolling() (*tele.Bot, error) {
 
-// // 	for update := range updates {
-// // 		if update.Message != nil { // If we got a message
-// // 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+	pref := tele.Settings{
+		Token:     b.cfg.Token,
+		Poller:    &tele.LongPoller{Timeout: 10 * time.Second},
+		OnError:   botOnError,
+		ParseMode: "HTML",
+	}
 
-// // 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-// // 			msg.ReplyToMessageID = update.Message.MessageID
+	bot, err := tele.NewBot(pref)
+	if err != nil {
+		return nil, err
+	}
 
-// // 			bot.Send(msg)
-// // 		}
-// // 	}
+	b.bot = bot
 
-// // }
+	// Register midlewares
+	// midlewares := midleware.New(b.log, b.cfg, bot)
 
-// // var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-// // 	tgbotapi.NewInlineKeyboardRow(
-// // 		tgbotapi.NewInlineKeyboardButtonURL("1.com", "http://1.com"),
-// // 		tgbotapi.NewInlineKeyboardButtonData("2", "2"),
-// // 		tgbotapi.NewInlineKeyboardButtonData("3", "3"),
-// // 	),
-// // 	tgbotapi.NewInlineKeyboardRow(
-// // 		tgbotapi.NewInlineKeyboardButtonData("4", "4"),
-// // 		tgbotapi.NewInlineKeyboardButtonData("5", "5"),
-// // 		tgbotapi.NewInlineKeyboardButtonData("6", "6"),
-// // 	),
-// // )
+	bot.Use(func(next tele.HandlerFunc) tele.HandlerFunc {
 
-// // func main() {
-// // 	bot, err := tgbotapi.NewBotAPI(Token)
-// // 	if err != nil {
-// // 		log.Panic(err)
-// // 	}
+		return func(ctx tele.Context) error {
+			var (
+				sender = ctx.Sender()
+				menu   = &tele.ReplyMarkup{
+					OneTimeKeyboard: true,
+					ResizeKeyboard:  true,
+				}
+			)
 
-// // 	bot.Debug = true
+			menu.Reply(tele.Row{tele.Btn{Text: "O'zbek Tili 🇺🇿"}, tele.Btn{Text: "Русcкий Язык 🇷🇺"}})
 
-// // 	log.Printf("Authorized on account %s", bot.Self.UserName)
+			_, ok := b.users[sender.ID]
+			if !ok {
+				b.users[sender.ID] = &SessionUser{
+					step: "lang",
+					user: &User{
+						ID:        sender.ID,
+						FirstName: sender.FirstName,
+						Username:  sender.Username,
+					},
+				}
 
-// // 	u := tgbotapi.NewUpdate(0)
-// // 	u.Timeout = 60
+				return ctx.Send("Tilni tanlang!", menu)
+			}
 
-// // 	updates := bot.GetUpdatesChan(u)
+			return next(ctx)
+		}
+	})
+	// bot.Use(midlewares.Logger, midlewares.CheckUser)
 
-// // 	for update := range updates {
-// // 		if update.Message == nil { // ignore any non-Message updates
-// // 			continue
-// // 		}
+	// Bot settings
+	// settings := settings.New(bot, b.log)
 
-// // 		if !update.Message.IsCommand() { // ignore any non-command Messages
-// // 			continue
-// // 		}
+	// err = settings.SetCommands()
+	// if err != nil {
+	// 	b.log.Error("error on SetCommands", logger.Any("err:", err))
+	// }
 
-// // 		// Create a new MessageConfig. We don't have text yet,
-// // 		// so we leave it empty.
-// // 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+	bot.Handle(tele.OnText, b.Text)
+	bot.Handle(tele.OnPhoto, b.Text)
 
-// // 		// Extract the command from the Message.
-// // 		switch update.Message.Command() {
-// // 		case "language":
-// // 			msg.Text = "Выберите удобный вам язык. Русский Uzbek"
-// // 		case "Русский":
-// // 			msg.Text = "Вы выбрали Русский язык"
-// // 		case "Uzbek":
-// // 			msg.Text = "Siz O'zbek tilini tanladingiz"
-// // 		default:
-// // 			msg.Text = "Как вас зовут?"
-// // 		}
+	b.bot.Send(&tele.Chat{ID: -1001805067522}, "", &tele.SendOptions{})
 
-// // 		if _, err := bot.Send(msg); err != nil {
-// // 			log.Panic(err)
-// // 		}
-// // 	}
-// // }
+	// go bot.Start()
+	bot.Start()
 
-// var numericKeyboard = tgbotapi.NewReplyKeyboard(
-// 	tgbotapi.NewKeyboardButtonRow(
-// 		tgbotapi.NewKeyboardButton("O'zbek Tili 🇺🇿"),
-// 		tgbotapi.NewKeyboardButton("Русккий Язык 🇷🇺"),
-// 	),
-// )
+	return bot, nil
+}
 
-// func main() {
+func botOnError(err error, ctx tele.Context) {
 
-// 	bot := NewBot(logger.NewLogger("asdf", "info"), config.Load())
+}
 
-// 	bot.NewBotWithPolling(Token)
-// 	// bot, err := tgbotapi.NewBotAPI(Token)
-// 	// if err != nil {
-// 	// 	log.Panic(err)
-// 	// }
+func (b *Bot) Text(ctx tele.Context) error {
 
-// 	// bot.Debug = true
+	var (
+		text = ctx.Text()
+		ques = &tele.ReplyMarkup{
+			OneTimeKeyboard: true,
+			ResizeKeyboard:  true,
+		}
+		ques1 = &tele.ReplyMarkup{
+			OneTimeKeyboard: true,
+			ResizeKeyboard:  true,
+		}
+		ques2 = &tele.ReplyMarkup{
+			RemoveKeyboard: true,
+			ResizeKeyboard: true,
+		}
+	)
 
-// 	// log.Printf("Authorized on account %s", bot.Self.UserName)
+	if text == "🏠Menyu" {
+		b.users[ctx.Sender().ID].step = "about_us"
+		ques.Reply(tele.Row{tele.Btn{Text: "💼Bo'sh ish o'rinlari"}, tele.Btn{Text: "🏢Biz haqimizda"}}, tele.Row{tele.Btn{Text: "📍Manzillarimiz"}, tele.Btn{Text: "📞Aloqa"}})
 
-// 	// u := tgbotapi.NewUpdate(0)
-// 	// u.Timeout = 60
+		return ctx.Send("Ozingizga kerakli menyuni tanlang:", ques)
+	}
 
-// 	// updates := bot.GetUpdatesChan(u)
+	switch b.users[ctx.Sender().ID].step {
+	case "lang":
 
-// 	// for update := range updates {
-// 	// 	if update.Message == nil { // ignore non-Message updates
-// 	// 		continue
-// 	// 	}
+		b.users[ctx.Sender().ID].user.Language = text
+		b.users[ctx.Sender().ID].step = "about_us"
+		ques.Reply(tele.Row{tele.Btn{Text: "💼Bo'sh ish o'rinlari"}, tele.Btn{Text: "🏢Biz haqimizda"}}, tele.Row{tele.Btn{Text: "📍Manzillarimiz"}, tele.Btn{Text: "📞Aloqa"}})
 
-// 	// 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Здравствуйте, это HR бот Tiin. Чтобы продолжить, напишите свое имя")
+		return ctx.Send("Ozingizga kerakli menyuni tanlang:", ques)
 
-// 	// 	switch update.Message.Text {
-// 	// 	case "Muhammadamin":
-// 	// 		msg.Text = "Выберите удобный вам язык"
-// 	// 		msg.ReplyMarkup = numericKeyboard
-// 	// 		// msg.Text = "Сколько вам лет?"
-// 	// 	case "O'zbek Tili 🇺🇿":
-// 	// 		msg.Text = "Yoshingiz nechida?"
-// 	// 	case "19":
-// 	// 		msg.Text = "Tug'ilgan shahringiz?"
-// 	// 	case "Toshkent":
-// 	// 		msg.Text = "Ma'lumot uchun rahmat! Yaqin orada siz bilan bog'lanamiz"
-// 	// 	case "Русккий Язык 🇷🇺":
-// 	// 		msg.Text = "Сколько вам лет?"
-// 	// 	case "20":
-// 	// 		msg.Text = "Укажите город рождения"
-// 	// 	case "Ташкент":
-// 	// 		msg.Text = "Спасибо за информацию! Свяжемся с вами в скором времени"
+	case "about_us":
+		switch text {
+		case "💼Bo'sh ish o'rinlari":
 
-// 	// 	}
+			b.users[ctx.Sender().ID].user.AboutUs = text
+			b.users[ctx.Sender().ID].step = "working_place"
 
-// 	// 	if _, err := bot.Send(msg); err != nil {
-// 	// 		log.Panic(err)
-// 	// 	}
-// 	// }
-// }
+			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+			return ctx.Send("Qaysi filialda ishlamoqchisiz?", ques)
+		case "🏢Biz haqimizda":
+			return ctx.Send("Tiin ulgurji market")
+		case "📍Manzillarimiz":
+			return ctx.Send("1.Tiin Sayram 5/92\n\n2.Tiin Qo'yliq")
+		case "Aloqa":
+			return ctx.Send("📞Aloqa uchun: +998935559562")
+
+		}
+
+	case "working_place":
+		if text == "🔙Orqaga" {
+			b.users[ctx.Sender().ID].step = "about_us"
+			ques.Reply(tele.Row{tele.Btn{Text: "💼Bo'sh ish o'rinlari"}, tele.Btn{Text: "🏢Biz haqimizda"}}, tele.Row{tele.Btn{Text: "📍Manzillarimiz"}, tele.Btn{Text: "📞Aloqa"}})
+
+			return ctx.Send("Ozingizga kerakli menyuni tanlang:", ques)
+		}
+		b.users[ctx.Sender().ID].user.WorkingAdress = text
+		b.users[ctx.Sender().ID].step = "working_as"
+
+		ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+		return ctx.Send("Qaysi lavozimga topshiryapsiz?", ques1)
+
+	case "working_as":
+		if text == "🔙Orqaga" {
+			b.users[ctx.Sender().ID].step = "working_place"
+			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+			return ctx.Send("Qaysi filialda ishlamoqchisiz?", ques)
+		}
+		b.users[ctx.Sender().ID].user.WorkingAs = text
+		b.users[ctx.Sender().ID].step = "name"
+
+		return ctx.Send("To'liq ismingizni kiriting (Murodjon Tursunov Husanboy o'g'li):")
+	case "name":
+		b.users[ctx.Sender().ID].user.FirstName = text
+		b.users[ctx.Sender().ID].step = "age"
+
+		return ctx.Send("Tug'ilgan sanangiz (masalan: 18.03.1995):")
+	case "age":
+		b.users[ctx.Sender().ID].user.Age = text
+		b.users[ctx.Sender().ID].step = "gender"
+		ques.Reply(tele.Row{tele.Btn{Text: "🧑Erkak"}, tele.Btn{Text: "👩Ayol"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+		return ctx.Send("Jinsingiz:", ques)
+	case "gender":
+		if text == "🔙Orqaga" {
+			b.users[ctx.Sender().ID].step = "age"
+			return ctx.Send("Tug'ilgan sanangiz (masalan: 18.03.1995):")
+		}
+		b.users[ctx.Sender().ID].user.Gender = text
+		b.users[ctx.Sender().ID].step = "city"
+
+		// ques.Reply(tele.Row{tele.Btn{Text: "Xa"}, tele.Btn{Text: "Yoq"}})
+
+		return ctx.Send("Yashash manzilingiz?")
+	// case "student":
+	// 	b.users[ctx.Sender().ID].user.Student = text
+	// 	b.users[ctx.Sender().ID].step = "city"
+
+	// 	return ctx.Send("Yashash manzilingiz:")
+	case "city":
+		b.users[ctx.Sender().ID].user.City = text
+		b.users[ctx.Sender().ID].step = "phone_number"
+
+		return ctx.Send("Telefon raqamingizni kiriting (masalan: +998991234567):")
+	case "phone_number":
+		b.users[ctx.Sender().ID].user.PhoneNumber = text
+		b.users[ctx.Sender().ID].step = "degree"
+		ques2.Reply(tele.Row{tele.Btn{Text: "Oliy"}, tele.Btn{Text: "O'rta"}}, tele.Row{tele.Btn{Text: "O'rta maxsus"}, tele.Btn{Text: "Talaba"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+		return ctx.Send("Ma'lumotingiz qanday?", ques2)
+	case "degree":
+		if text == "🔙Orqaga" {
+			b.users[ctx.Sender().ID].step = "phone_number"
+
+			return ctx.Send("Telefon raqamingizni kiriting (masalan: +998991234567):")
+		}
+		b.users[ctx.Sender().ID].user.Degree = text
+		b.users[ctx.Sender().ID].step = "photo"
+
+		return ctx.Send("Suratingizni yuboring (telefoningizdan selfi olishingiz mumkin):")
+	}
+
+	return ctx.Send("Ariza faqat bir marta jonatiladi!")
+
+	// Instead, prefer a context short-hand:
+}
+
+func (b *Bot) Photo(ctx tele.Context) error {
+
+	var (
+		photo = ctx.Message().Photo
+		ques  = &tele.ReplyMarkup{
+			OneTimeKeyboard: true,
+			ResizeKeyboard:  true,
+		}
+	)
+
+	switch b.users[ctx.Sender().ID].step {
+	case "photo":
+
+		if photo != nil {
+			b.users[ctx.Sender().ID].user.Photo = photo
+			fmt.Println(photo)
+			b.PhotoSender(
+				tele.Album{
+					&tele.Photo{
+						File: tele.File{FileID: photo.FileID, UniqueID: photo.UniqueID},
+						Caption: fmt.Sprintf("📋Rezyume\n\n<b>📍Filial</b>:%s<b>👨‍💼Lavozim</b>:%s<b>📇Ism va Familiya</b>:%s<b>🔢Yosh</b>:%s<b>👥Jinsi</b>:%s<b>🏡Yashash manzili</b>:%s<b>📞Telefon Raqami</b>:%s<b>📃Ma'lumoti</b>:%s\n\n",
+							b.users[ctx.Sender().ID].user.WorkingAdress,
+							b.users[ctx.Sender().ID].user.WorkingAs,
+							b.users[ctx.Sender().ID].user.FirstName,
+							b.users[ctx.Sender().ID].user.Age,
+							b.users[ctx.Sender().ID].user.Gender,
+							b.users[ctx.Sender().ID].user.City,
+							b.users[ctx.Sender().ID].user.PhoneNumber,
+							b.users[ctx.Sender().ID].user.Degree,
+						),
+					},
+				},
+			)
+			fmt.Println(photo)
+		} else {
+			return ctx.Send("Rasm xato jo'natildi!")
+		}
+
+		b.users[ctx.Sender().ID].step = "about_us"
+		ques.Reply(tele.Row{tele.Btn{Text: "💼Bo'sh ish o'rinlari"}, tele.Btn{Text: "🏢Biz haqimizda"}}, tele.Row{tele.Btn{Text: "📍Manzillarimiz"}, tele.Btn{Text: "📞Aloqa"}})
+
+		return ctx.Send("Rahmat. Siz ko'rib chiqiladigan nomzodlar ro'yxatidasiz.Hurmat bilan Tiin kadrlar bo'limi!", ques)
+	}
+
+	return ctx.Send("Ariza faqat bir marta jonatiladi!")
+
+	// Instead, prefer a context short-hand:
+}
+
+func (b *Bot) MessageSender(messsage string) error {
+
+	_, err := b.bot.Send(&tele.Chat{ID: -1001805067522}, messsage, &tele.SendOptions{
+		ParseMode: "HTML",
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Bot) PhotoSender(album tele.Album) error {
+
+	_, err := b.bot.SendAlbum(&tele.Chat{ID: -1001805067522}, album, &tele.SendOptions{
+		ParseMode: "HTML",
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func main() {
+	bot := NewBot(logger.NewLogger("asdf", "info"), config.Load())
+
+	// google.New()
+
+	bot.NewBotWithPolling()
+}
