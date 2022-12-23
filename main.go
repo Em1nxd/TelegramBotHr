@@ -114,7 +114,7 @@ func (b *Bot) NewBotWithPolling() (*tele.Bot, error) {
 	bot.Handle(tele.OnText, b.Text)
 	bot.Handle(tele.OnPhoto, b.Photo)
 
-	b.bot.Send(&tele.Chat{ID: -1001805067522}, "Start", &tele.SendOptions{})
+	b.bot.Send(&tele.Chat{ID: -1001805067522}, "Bot o'z ishini boshladi😉", &tele.SendOptions{})
 
 	// go bot.Start()
 	bot.Start()
@@ -308,7 +308,7 @@ func (b *Bot) Photo(ctx tele.Context) error {
 				tele.Album{
 					&tele.Photo{
 						File: tele.File{FileID: photo.FileID, UniqueID: photo.UniqueID},
-						Caption: fmt.Sprintf("📋Rezyume\n\n<b>📍Filial</b>:%s<b>👨‍💼Lavozim</b>:%s<b>📇Ism va Familiya</b>:%s<b>🔢Yosh</b>:%s<b>👥Jinsi</b>:%s<b>🏡Yashash manzili</b>:%s<b>📞Telefon Raqami</b>:%s<b>📃Ma'lumoti</b>:%s\n\n",
+						Caption: fmt.Sprintf("📋Rezyume\n\n<b>📍Filial</b>:%s<b>\n👨‍💼Lavozim</b>:%s<b>\n📇Ism va Familiya</b>:%s<b>\n🔢Yosh</b>:%s<b>\n👥Jinsi</b>:%s<b>\n🏡Yashash manzili</b>:%s<b>\n📞Telefon Raqami</b>:%s<b>\n📃Ma'lumoti</b>:%s",
 							b.users[ctx.Sender().ID].user.WorkingAdress,
 							b.users[ctx.Sender().ID].user.WorkingAs,
 							b.users[ctx.Sender().ID].user.FirstName,
