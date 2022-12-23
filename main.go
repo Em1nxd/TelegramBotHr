@@ -247,7 +247,7 @@ func (b *Bot) Text(ctx tele.Context) error {
 
 		// ques.Reply(tele.Row{tele.Btn{Text: "Xa"}, tele.Btn{Text: "Yoq"}})
 
-		return ctx.Send("Yashash manzilingiz?")
+		return ctx.Send("Yashash manzilingiz? (masalan: Toshkent shahar, Chilonzor tuman)")
 	// case "student":
 	// 	b.users[ctx.Sender().ID].user.Student = text
 	// 	b.users[ctx.Sender().ID].step = "city"
