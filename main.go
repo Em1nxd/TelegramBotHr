@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -63,6 +64,7 @@ func (b *Bot) NewBotWithPolling() (*tele.Bot, error) {
 		return nil, err
 	}
 
+	fmt.Println(bot.Me)
 	b.bot = bot
 
 	// Register midlewares
@@ -73,16 +75,17 @@ func (b *Bot) NewBotWithPolling() (*tele.Bot, error) {
 		return func(ctx tele.Context) error {
 			var (
 				sender = ctx.Sender()
-				menu   = &tele.ReplyMarkup{
-					OneTimeKeyboard: true,
-					ResizeKeyboard:  true,
-				}
 			)
-
-			menu.Reply(tele.Row{tele.Btn{Text: "O'zbek Tili 🇺🇿"}, tele.Btn{Text: "Русcкий Язык 🇷🇺"}})
 
 			_, ok := b.users[sender.ID]
 			if !ok {
+
+				var menu = &tele.ReplyMarkup{
+					OneTimeKeyboard: true,
+					ResizeKeyboard:  true,
+				}
+
+				menu.Reply(tele.Row{tele.Btn{Text: "O'zbek Tili 🇺🇿"}, tele.Btn{Text: "Русcкий Язык 🇷🇺"}})
 				b.users[sender.ID] = &SessionUser{
 					step: "lang",
 					user: &User{
@@ -109,9 +112,9 @@ func (b *Bot) NewBotWithPolling() (*tele.Bot, error) {
 	// }
 
 	bot.Handle(tele.OnText, b.Text)
-	bot.Handle(tele.OnPhoto, b.Text)
+	bot.Handle(tele.OnPhoto, b.Photo)
 
-	b.bot.Send(&tele.Chat{ID: -1001805067522}, "", &tele.SendOptions{})
+	b.bot.Send(&tele.Chat{ID: -1001805067522}, "Start", &tele.SendOptions{})
 
 	// go bot.Start()
 	bot.Start()
@@ -184,6 +187,13 @@ func (b *Bot) Text(ctx tele.Context) error {
 			return ctx.Send("Ozingizga kerakli menyuni tanlang:", ques)
 		}
 		b.users[ctx.Sender().ID].user.WorkingAdress = text
+		isMatch, err := regexp.Match("Tiin Sayram|Tiin Qo'yliq", []byte(text))
+		if err != nil || !isMatch {
+
+			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+			return ctx.Send("Filialni to'g'ri tanlang!", ques)
+		}
 		b.users[ctx.Sender().ID].step = "working_as"
 
 		ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
@@ -198,6 +208,13 @@ func (b *Bot) Text(ctx tele.Context) error {
 			return ctx.Send("Qaysi filialda ishlamoqchisiz?", ques)
 		}
 		b.users[ctx.Sender().ID].user.WorkingAs = text
+		isMatch, err := regexp.Match("Kassir|Sotuvchi|Oxrana|Ofis hodimi", []byte(text))
+		if err != nil || !isMatch {
+
+			ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+			return ctx.Send("Lavozimni to'g'ri kiriting!!!", ques)
+		}
 		b.users[ctx.Sender().ID].step = "name"
 
 		return ctx.Send("To'liq ismingizni kiriting (Murodjon Tursunov Husanboy o'g'li):")
@@ -218,6 +235,14 @@ func (b *Bot) Text(ctx tele.Context) error {
 			return ctx.Send("Tug'ilgan sanangiz (masalan: 18.03.1995):")
 		}
 		b.users[ctx.Sender().ID].user.Gender = text
+
+		isMatch, err := regexp.Match("🧑Erkak|👩Ayol", []byte(text))
+		if err != nil || !isMatch {
+
+			ques.Reply(tele.Row{tele.Btn{Text: "🧑Erkak"}, tele.Btn{Text: "👩Ayol"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+			return ctx.Send("Jinsingizni xato kiritdingiz!!!", ques)
+		}
 		b.users[ctx.Sender().ID].step = "city"
 
 		// ques.Reply(tele.Row{tele.Btn{Text: "Xa"}, tele.Btn{Text: "Yoq"}})
@@ -246,6 +271,13 @@ func (b *Bot) Text(ctx tele.Context) error {
 			return ctx.Send("Telefon raqamingizni kiriting (masalan: +998991234567):")
 		}
 		b.users[ctx.Sender().ID].user.Degree = text
+		isMatch, err := regexp.Match("Oliy|O'rta|O'rta maxsus|Talaba", []byte(text))
+		if err != nil || !isMatch {
+
+			ques2.Reply(tele.Row{tele.Btn{Text: "Oliy"}, tele.Btn{Text: "O'rta"}}, tele.Row{tele.Btn{Text: "O'rta maxsus"}, tele.Btn{Text: "Talaba"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+
+			return ctx.Send("Ma'lumotingizni to'g'ri kiriting!!!", ques)
+		}
 		b.users[ctx.Sender().ID].step = "photo"
 
 		return ctx.Send("Suratingizni yuboring (telefoningizdan selfi olishingiz mumkin):")
