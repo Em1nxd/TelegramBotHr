@@ -167,13 +167,13 @@ func (b *Bot) Text(ctx tele.Context) error {
 			b.users[ctx.Sender().ID].user.AboutUs = text
 			b.users[ctx.Sender().ID].step = "working_place"
 
-			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 			return ctx.Send("Qaysi filialda ishlamoqchisiz?", ques)
 		case "🏢Biz haqimizda":
 			return ctx.Send("Tiin ulgurji market")
 		case "📍Manzillarimiz":
-			return ctx.Send("1.Tiin Sayram 5/92\n")
+			return ctx.Send("1.Tiin Sayram 5/92\n\n2.Tiin Qo'yliq")
 		case "Aloqa":
 			return ctx.Send("📞Aloqa uchun: +998935559562")
 
@@ -187,31 +187,31 @@ func (b *Bot) Text(ctx tele.Context) error {
 			return ctx.Send("Ozingizga kerakli menyuni tanlang:", ques)
 		}
 		b.users[ctx.Sender().ID].user.WorkingAdress = text
-		isMatch, err := regexp.Match("Tiin Sayram", []byte(text))
+		isMatch, err := regexp.Match("Tiin Sayram|Tiin Qo'yliq", []byte(text))
 		if err != nil || !isMatch {
 
-			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 			return ctx.Send("Filialni to'g'ri tanlang!", ques)
 		}
 		b.users[ctx.Sender().ID].step = "working_as"
 
-		ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}, tele.Btn{Text: "Haydovchi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+		ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 		return ctx.Send("Qaysi lavozimga topshiryapsiz?", ques1)
 
 	case "working_as":
 		if text == "🔙Orqaga" {
 			b.users[ctx.Sender().ID].step = "working_place"
-			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+			ques.Reply(tele.Row{tele.Btn{Text: "Tiin Sayram"}, tele.Btn{Text: "Tiin Qo'yliq"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 			return ctx.Send("Qaysi filialda ishlamoqchisiz?", ques)
 		}
 		b.users[ctx.Sender().ID].user.WorkingAs = text
-		isMatch, err := regexp.Match("Kassir|Sotuvchi|Oxrana|Ofis hodimi|Haydovchi", []byte(text))
+		isMatch, err := regexp.Match("Kassir|Sotuvchi|Oxrana|Ofis hodimi", []byte(text))
 		if err != nil || !isMatch {
 
-			ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}, tele.Btn{Text: "Haydovchi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
+			ques1.Reply(tele.Row{tele.Btn{Text: "Kassir"}, tele.Btn{Text: "Sotuvchi"}}, tele.Row{tele.Btn{Text: "Oxrana"}, tele.Btn{Text: "Ofis hodimi"}}, tele.Row{tele.Btn{Text: "🔙Orqaga"}, tele.Btn{Text: "🏠Menyu"}})
 
 			return ctx.Send("Lavozimni to'g'ri kiriting!!!", ques)
 		}
